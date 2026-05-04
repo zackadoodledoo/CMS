@@ -5,25 +5,11 @@
   </div>
 
   <div class="panel-body">
-    <div
-      class="row"
+    <cms-contact-item
       *ngFor="let contact of contacts"
+      [contact]="contact"
       (click)="onSelected(contact)"
-      style="margin-bottom: 10px; cursor: pointer;"
     >
-      <!-- NAME FIRST (left side) -->
-      <div class="col-xs-9">
-        <h4>{{ contact.name }}</h4>
-      </div>
-
-      <!-- IMAGE SECOND (right side) -->
-      <div class="col-xs-3">
-        <img
-          [src]="contact.imageUrl"
-          alt="{{ contact.name }}"
-          class="img-responsive img-thumbnail"
-        />
-      </div>
-    </div>
+    </cms-contact-item>
   </div>
 </div>

@@ -1,0 +1,21 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="row pad-left-right">
+      <span class="pull-left title">Messages</span>
+      <a class="btn btn-success pull-right">New Message</a>
+    </div>
+  </div>
+
+  <div class="panel-body">
+    <div class="center-panel">
+      <cms-message-item
+        *ngFor="let message of messages"
+        [message]="message">
+      </cms-message-item>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <cms-message-edit (addMessageEvent)="onAddMessage($event)"></cms-message-edit>
+  </div>
+</div>
