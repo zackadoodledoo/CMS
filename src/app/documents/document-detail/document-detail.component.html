@@ -1,1 +1,10 @@
-<p>document-detail works!</p>
+<div class="panel panel-default" *ngIf="document">
+  <div class="panel-heading">
+    <h3 class="panel-title">{{ document.name }}</h3>
+  </div>
+
+  <div class="panel-body">
+    <p><strong>Description:</strong> {{ document.description }}</p>
+    <p><strong>URL:</strong> <a [href]="document.url" target="_blank">{{ document.url }}</a></p>
+  </div>
+</div>
