@@ -1,13 +1,24 @@
 <div class="row">
+
+  <!-- LEFT PANEL -->
   <div class="col-md-5">
-    <cms-document-list>
-    </cms-document-list>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="row pad-left-right">
+          <span class="pull-left title">Documents</span>
+          <a class="btn btn-success pull-right" [routerLink]="['new']">Add Document</a>
+        </div>
+      </div>
+
+      <div class="panel-body doc-panel-body">
+        <cms-document-list></cms-document-list>
+      </div>
+    </div>
   </div>
 
-  <div class="col-md-4">
-    <cms-document-detail
-      *ngIf="selectedDocument"
-      [document]="selectedDocument">
-    </cms-document-detail>
+  <!-- RIGHT DETAIL PANEL -->
+  <div class="col-md-7">
+    <router-outlet></router-outlet>
   </div>
+
 </div>

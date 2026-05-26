@@ -1,16 +1,34 @@
-
-.center-panel {
-  margin-left: auto;
-  margin-right: auto;
-  width: 38rem;
+.doc-grid {
+  text-align: center;
 }
 
-.title {
-  font-size: 2.5rem;
-  font-weight: bold;
+/* Make all tiles the same size */
+.doc-card {
+  background: #ffffff;
+  border: 2px solid #d0d0d0;
+  border-radius: 6px;
+  width: 110%;
+  height: 180px; /* <-- controls tile height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.pad-left-right{
-  padding-left:1rem;
-  padding-right:1rem;
+/* Hover effect */
+.doc-card:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+/* Selected tile */
+.active {
+  background-color: #337ab7 !important;
+  color: white !important;
+  border-color: #2e6da4 !important;
 }

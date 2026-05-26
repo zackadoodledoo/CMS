@@ -8,27 +8,19 @@ import { ContactService } from '../contact.service';
   styleUrls: ['./contact-list.component.css']
 })
 export class ContactListComponent implements OnInit {
-
   contacts: Contact[] = [];
 
-  constructor(private contactService: ContactService) {}
-
-  ngOnInit(): void {
-  this.contacts = this.contactService.getContacts();
-
-  this.contactService.contactListChangedEvent.subscribe(
-    (contacts: Contact[]) => {
-      this.contacts = contacts;
-    }
-  );
-}
-
-  onSelected(contact: Contact) {
-    this.contactService.contactSelectedEvent.emit(contact);
+  constructor(private contactService: ContactService) {
+    // Load initial list
+    this.contacts = this.contactService.getContacts();
   }
 
-  refreshContacts() {
-  this.contacts = this.contactService.getContacts();
-}
-
+  ngOnInit(): void {
+    // Subscribe to changes (delete, future add/edit)
+    this.contactService.contactListChangedEvent.subscribe(
+      (contacts: Contact[]) => {
+        this.contacts = contacts;
+      }
+    );
+  }
 }

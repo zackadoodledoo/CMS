@@ -3,7 +3,7 @@
     <h3 class="panel-title pull-left">{{ contact.name }}</h3>
 
     <div class="pull-right">
-      <a class="btn btn-primary" (click)="onEdit()">Edit</a>
+      <a class="btn btn-primary" [routerLink]="['edit']">Edit</a>
       <a class="btn btn-danger" (click)="onDelete()">Delete</a>
     </div>
   </div>

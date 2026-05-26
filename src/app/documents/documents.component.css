@@ -1,0 +1,5 @@
+.doc-panel-body {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 15px;
+}
