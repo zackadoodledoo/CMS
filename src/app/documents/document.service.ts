@@ -1,4 +1,5 @@
-import { Injectable, EventEmitter } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Document } from './document.model';
 import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
 
@@ -8,11 +9,33 @@ import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
 export class DocumentService {
 
   documents: Document[] = [];
-  documentSelectedEvent = new EventEmitter<Document>();
-  documentChangedEvent = new EventEmitter<Document[]>();
+
+  // Still allowed — child → parent communication
+  documentSelectedEvent = new Subject<Document>();
+
+  // Required by assignment — Observable for list changes
+  documentChangedEvent = new Subject<Document[]>();
+
+  // Required by assignment — used to generate new IDs
+  maxDocumentId: number;
 
   constructor() {
     this.documents = MOCKDOCUMENTS;
+    this.maxDocumentId = this.getMaxId();   // Required step
+  }
+
+  // Required by assignment
+  getMaxId(): number {
+    let maxId = 0;
+
+    for (const document of this.documents) {
+      const currentId = parseInt(document.id, 10);
+      if (currentId > maxId) {
+        maxId = currentId;
+      }
+    }
+
+    return maxId;
   }
 
   getDocuments(): Document[] {
@@ -28,6 +51,20 @@ export class DocumentService {
     return null;
   }
 
+  // Required by assignment
+  addDocument(newDocument: Document) {
+    if (!newDocument) {
+      return;
+    }
+
+    this.maxDocumentId++;
+    newDocument.id = this.maxDocumentId.toString();
+
+    this.documents.push(newDocument);
+
+    this.documentChangedEvent.next(this.documents.slice());
+  }
+
   updateDocument(original: Document, newDoc: Document) {
     if (!original || !newDoc) {
       return;
@@ -38,11 +75,12 @@ export class DocumentService {
       return;
     }
 
+    newDoc.id = original.id;
     this.documents[pos] = newDoc;
-    this.documentChangedEvent.emit(this.documents.slice());
+
+    this.documentChangedEvent.next(this.documents.slice());
   }
 
-  // ⭐ ADD THIS METHOD
   deleteDocument(document: Document) {
     if (!document) {
       return;
@@ -51,9 +89,3 @@ export class DocumentService {
     const pos = this.documents.indexOf(document);
     if (pos < 0) {
       return;
-    }
-
-    this.documents.splice(pos, 1);
-    this.documentChangedEvent.emit(this.documents.slice());
-  }
-}
