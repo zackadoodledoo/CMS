@@ -4,46 +4,46 @@
   </div>
 
   <div class="panel-body">
-    <form (ngSubmit)="onSubmit()">
+    <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <!-- form fields will go here -->
-       <div class="form-group">
-  <label for="name">Name</label>
-  <input
-    type="text"
-    id="name"
-    class="form-control"
-    [(ngModel)]="document.name"
-    name="name"
-  />
-</div>
 
-<div class="form-group">
-  <label for="description">Description</label>
-  <input
-    type="text"
-    id="description"
-    class="form-control"
-    [(ngModel)]="document.description"
-    name="description"
-  />
-</div>
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          class="form-control"
+          [(ngModel)]="document.name"
+          name="name"
+        />
+      </div>
 
-<div class="form-group">
-  <label for="url">URL</label>
-  <input
-    type="text"
-    id="url"
-    class="form-control"
-    [(ngModel)]="document.url"
-    name="url"
-  />
-</div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input
+          type="text"
+          id="description"
+          class="form-control"
+          [(ngModel)]="document.description"
+          name="description"
+        />
+      </div>
 
-<div class="form-group">
-  <button type="submit" class="btn btn-success">Save</button>
-  <button type="button" class="btn btn-danger" (click)="onCancel()">Cancel</button>
-</div>
+      <div class="form-group">
+        <label for="url">URL</label>
+        <input
+          type="text"
+          id="url"
+          class="form-control"
+          [(ngModel)]="document.url"
+          name="url"
+        />
+      </div>
 
+      <div class="form-group">
+        <button type="submit" class="btn btn-success">Save</button>
+        <button type="button" class="btn btn-danger" (click)="onCancel()">Cancel</button>
+      </div>
 
     </form>
   </div>

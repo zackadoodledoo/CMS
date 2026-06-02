@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Document } from './document.model';
 import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
@@ -10,8 +10,8 @@ export class DocumentService {
 
   documents: Document[] = [];
 
-  // Still allowed — child → parent communication
-  documentSelectedEvent = new Subject<Document>();
+  // Required by assignment — child → parent communication
+  documentSelectedEvent = new EventEmitter<Document>();
 
   // Required by assignment — Observable for list changes
   documentChangedEvent = new Subject<Document[]>();
@@ -21,7 +21,7 @@ export class DocumentService {
 
   constructor() {
     this.documents = MOCKDOCUMENTS;
-    this.maxDocumentId = this.getMaxId();   // Required step
+    this.maxDocumentId = this.getMaxId();
   }
 
   // Required by assignment
@@ -89,3 +89,9 @@ export class DocumentService {
     const pos = this.documents.indexOf(document);
     if (pos < 0) {
       return;
+    }
+
+    this.documents.splice(pos, 1);
+    this.documentChangedEvent.next(this.documents.slice());
+  }
+}
