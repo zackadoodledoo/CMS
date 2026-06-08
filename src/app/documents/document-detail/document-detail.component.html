@@ -1,9 +1,10 @@
 <div class="panel panel-default" *ngIf="document">
   <div class="panel-heading">
     <h3 class="panel-title">{{ document.name }}</h3>
-    <a class="btn btn-primary pull-right" [routerLink]="[document.id, 'edit']">
+    <a class="btn btn-primary pull-right" [routerLink]="['edit']" type="button">
   Edit
     </a>
+
     <a class="btn btn-success pull-right" [href]="document.url" target="_blank">
   View
 </a>

@@ -1,50 +1,73 @@
 <div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">Edit Document</h3>
-  </div>
-
   <div class="panel-body">
-    <form #form="ngForm" (ngSubmit)="onSubmit(form)">
-      <!-- form fields will go here -->
 
-      <div class="form-group">
-        <label for="name">Name</label>
-        <input
-          type="text"
-          id="name"
-          class="form-control"
-          [(ngModel)]="document.name"
-          name="name"
-        />
+    <form id="document-edit" #f="ngForm" (ngSubmit)="onSubmit(f)" novalidate>
+      <div class="row">
+        <div class="col-sm-12 form-group">
+          <label for="name">Document Title:</label>
+          <input
+            type="text"
+            id="name"
+            class="form-control"
+            name="name"
+            [(ngModel)]="document.name"
+            required
+            #name="ngModel"
+            size="120"
+            maxlength="120"
+            [class.is-invalid]="name.invalid && (name.touched || f.submitted)"
+            [attr.aria-invalid]="name.invalid && (name.touched || f.submitted)">
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="description">Description</label>
-        <input
-          type="text"
-          id="description"
-          class="form-control"
-          [(ngModel)]="document.description"
-          name="description"
-        />
+      <div class="row">
+        <div class="col-sm-12 form-group">
+          <label for="description">Document Description:</label>
+          <input
+            type="text"
+            id="description"
+            class="form-control"
+            name="description"
+            [(ngModel)]="document.description"
+            size="120"
+            maxlength="255">
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="url">URL</label>
-        <input
-          type="text"
-          id="url"
-          class="form-control"
-          [(ngModel)]="document.url"
-          name="url"
-        />
+      <div class="row">
+        <div class="col-sm-12 form-group">
+          <label for="url">Document URL:</label>
+          <input
+            type="url"
+            id="url"
+            class="form-control"
+            name="url"
+            [(ngModel)]="document.url"
+            required
+            #url="ngModel"
+            size="150"
+            maxlength="255"
+            [class.is-invalid]="url.invalid && (url.touched || f.submitted)"
+            [attr.aria-invalid]="url.invalid && (url.touched || f.submitted)">
+        </div>
       </div>
 
-      <div class="form-group">
-        <button type="submit" class="btn btn-success">Save</button>
-        <button type="button" class="btn btn-danger" (click)="onCancel()">Cancel</button>
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="alert alert-danger" *ngIf="!f.valid">
+            The Document Title and Document URL are required fields.
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12 btn-toolbar">
+          <button class="btn btn-success" type="submit" [disabled]="!f.valid">Save</button>
+          <button class="btn btn-primary" type="button" (click)="onCancel()">Cancel</button>
+        </div>
       </div>
 
     </form>
+
   </div>
 </div>

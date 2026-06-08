@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
 import { Document } from '../document.model';
 import { DocumentService } from '../document.service';
 
@@ -11,8 +12,9 @@ import { DocumentService } from '../document.service';
 export class DocumentEditComponent implements OnInit {
 
   originalDocument: Document;
-  document: Document;
+  document: Document = new Document('', '', '', '', null);
   editMode = false;
+  id: string;
 
   constructor(
     private documentService: DocumentService,
@@ -21,35 +23,40 @@ export class DocumentEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      const id = params['id'];
+    this.route.params.subscribe((params: Params) => {
+      this.id = params['id'];
 
-      if (!id) {
+      if (!this.id) {
         this.editMode = false;
+        // document already initialized for add mode
         return;
       }
 
-      this.originalDocument = this.documentService.getDocument(id);
+      this.originalDocument = this.documentService.getDocument(this.id);
 
       if (!this.originalDocument) {
         return;
       }
 
       this.editMode = true;
-
-      // Deep copy so editing doesn’t mutate the original
       this.document = JSON.parse(JSON.stringify(this.originalDocument));
     });
   }
 
-  onSubmit(form) {
-    const newDocument = form.value;
+  onSubmit(form: NgForm) {
+    const value = form.value;
+
+    const newDocument = new Document(
+      this.editMode ? this.originalDocument.id : '',
+      value.name,
+      value.description,
+      value.url,
+      null
+    );
 
     if (this.editMode) {
-      // Required week07
       this.documentService.updateDocument(this.originalDocument, newDocument);
     } else {
-      // Required by assignment week 07
       this.documentService.addDocument(newDocument);
     }
 

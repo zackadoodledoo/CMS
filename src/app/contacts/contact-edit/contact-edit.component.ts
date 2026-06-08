@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
 import { Contact } from '../contact.model';
 import { ContactService } from '../contact.service';
 
@@ -9,10 +10,12 @@ import { ContactService } from '../contact.service';
   styleUrls: ['./contact-edit.component.css']
 })
 export class ContactEditComponent implements OnInit {
-
   originalContact: Contact;
-  contact: Contact;
+  // Provide all constructor args including group (empty array for new)
+  contact: Contact = new Contact('', '', '', '', '', []);
+  groupContacts: Contact[] = [];
   editMode = false;
+  id: string;
 
   constructor(
     private contactService: ContactService,
@@ -21,35 +24,48 @@ export class ContactEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      const id = params['id'];
+    this.route.params.subscribe((params: Params) => {
+      this.id = params['id'];
 
-      if (!id) {
+      if (!this.id) {
         this.editMode = false;
         return;
       }
 
-      this.originalContact = this.contactService.getContact(id);
+      this.originalContact = this.contactService.getContact(this.id);
 
       if (!this.originalContact) {
         return;
       }
 
       this.editMode = true;
-
-      // Deep copy so editing doesn’t mutate the original
       this.contact = JSON.parse(JSON.stringify(this.originalContact));
+
+      if (this.originalContact.group && this.originalContact.group.length > 0) {
+        this.groupContacts = JSON.parse(JSON.stringify(this.originalContact.group));
+      } else {
+        this.groupContacts = [];
+      }
     });
   }
 
-  onSubmit(form) {
-    const newContact = form.value;
+  onSubmit(form: NgForm) {
+    const value = form.value;
+
+    // Include group as the sixth argument
+    const newContact = new Contact(
+      this.editMode ? this.originalContact.id : '',
+      value.name,
+      value.email,
+      value.phone,
+      value.imageUrl,
+      // attach cloned group array (or empty array)
+      this.groupContacts && this.groupContacts.length ? JSON.parse(JSON.stringify(this.groupContacts)) : []
+    );
 
     if (this.editMode) {
-      // ⭐ Required by assignment
       this.contactService.updateContact(this.originalContact, newContact);
     } else {
-      // ⭐ Required by assignment
       this.contactService.addContact(newContact);
     }
 
@@ -58,5 +74,12 @@ export class ContactEditComponent implements OnInit {
 
   onCancel() {
     this.router.navigate(['/contacts']);
+  }
+
+  onRemoveItem(index: number) {
+    if (index < 0 || index >= this.groupContacts.length) {
+      return;
+    }
+    this.groupContacts.splice(index, 1);
   }
 }
