@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Contact } from './contact.model';
-import { MOCKCONTACTS } from './MOCKCONTACTS';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -9,19 +9,47 @@ import { MOCKCONTACTS } from './MOCKCONTACTS';
 export class ContactService {
 
   contacts: Contact[] = [];
-
-  // Child → parent communication (still allowed)
-  contactSelectedEvent = new Subject<Contact>();
-
-  // Required Observable for list changes
+  contactSelectedEvent = new EventEmitter<Contact>();
   contactListChangedEvent = new Subject<Contact[]>();
+  maxContactId: number;
 
-  constructor() {
-    this.contacts = MOCKCONTACTS;
+  // Your Firebase URL (must end with a slash)
+  private databaseUrl = 'https://zack-cms-default-rtdb.firebaseio.com/';
+
+  constructor(private http: HttpClient) { }
+
+  getMaxId(): number {
+    let maxId = 0;
+
+    for (const contact of this.contacts) {
+      const currentId = parseInt(contact.id, 10);
+      if (currentId > maxId) {
+        maxId = currentId;
+      }
+    }
+
+    return maxId;
   }
 
-  getContacts(): Contact[] {
-    return this.contacts.slice();
+  // HTTP GET — loads contacts from Firebase
+  getContacts() {
+    this.http
+      .get<Contact[]>(this.databaseUrl + 'contacts.json')
+      .subscribe(
+        (contacts: Contact[]) => {
+          this.contacts = contacts;
+          this.maxContactId = this.getMaxId();
+
+          this.contacts.sort((a, b) =>
+            a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+          );
+
+          this.contactListChangedEvent.next(this.contacts.slice());
+        },
+        (error: any) => {
+          console.log(error);
+        }
+      );
   }
 
   getContact(id: string): Contact {
@@ -33,23 +61,31 @@ export class ContactService {
     return null;
   }
 
-  // ⭐ Required by assignment
+  // HTTP PUT — saves contacts to Firebase
+  storeContacts() {
+    const contactsString = JSON.stringify(this.contacts);
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put(this.databaseUrl + 'contacts.json', contactsString, { headers })
+      .subscribe(() => {
+        this.contactListChangedEvent.next(this.contacts.slice());
+      });
+  }
+
+  // Updated to call storeContacts()
   addContact(newContact: Contact) {
     if (!newContact) {
       return;
     }
 
-    // Generate new ID
-    const maxId = this.getMaxId();
-    const newId = (maxId + 1).toString();
-    newContact.id = newId;
+    this.maxContactId++;
+    newContact.id = this.maxContactId.toString();
 
     this.contacts.push(newContact);
-
-    this.contactListChangedEvent.next(this.contacts.slice());
+    this.storeContacts();
   }
 
-  // ⭐ Required by assignment
   updateContact(original: Contact, newContact: Contact) {
     if (!original || !newContact) {
       return;
@@ -60,12 +96,10 @@ export class ContactService {
       return;
     }
 
-    // Keep the same ID
     newContact.id = original.id;
-
     this.contacts[pos] = newContact;
 
-    this.contactListChangedEvent.next(this.contacts.slice());
+    this.storeContacts();
   }
 
   deleteContact(contact: Contact) {
@@ -79,21 +113,6 @@ export class ContactService {
     }
 
     this.contacts.splice(pos, 1);
-
-    this.contactListChangedEvent.next(this.contacts.slice());
-  }
-
-  // ⭐ Needed to generate unique IDs
-  private getMaxId(): number {
-    let maxId = 0;
-
-    for (const contact of this.contacts) {
-      const currentId = parseInt(contact.id, 10);
-      if (currentId > maxId) {
-        maxId = currentId;
-      }
-    }
-
-    return maxId;
+    this.storeContacts();
   }
 }
