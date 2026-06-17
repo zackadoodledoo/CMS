@@ -6,7 +6,12 @@ import { Contact } from './contact.model';
 })
 export class ContactsFilterPipe implements PipeTransform {
 
-  transform(contacts: Contact[], term: string): any {
+  transform(contacts: Contact[], term: string): Contact[] {
+    // FIX: Prevents pipe from breaking when contacts is null during Firebase load
+    if (!contacts) {
+      return [];
+    }
+
     let filteredContacts: Contact[] = [];
 
     if (term && term.length > 0) {
