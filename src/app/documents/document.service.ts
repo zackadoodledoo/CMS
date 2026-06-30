@@ -11,37 +11,16 @@ export class DocumentService {
   documents: Document[] = [];
   documentSelectedEvent = new EventEmitter<Document>();
   documentChangedEvent = new Subject<Document[]>();
-  maxDocumentId: number;
-
-  // Replace with YOUR Firebase URL (must end with a slash)
-  //private databaseUrl = 'https://YOUR_PROJECT_ID.firebaseio.com/'; 
-  private databaseUrl = 'https://zack-cms-default-rtdb.firebaseio.com/';
-
 
   constructor(private http: HttpClient) { }
 
-  // Required by assignment
-  getMaxId(): number {
-    let maxId = 0;
-
-    for (const document of this.documents) {
-      const currentId = parseInt(document.id, 10);
-      if (currentId > maxId) {
-        maxId = currentId;
-      }
-    }
-
-    return maxId;
-  }
-
-  // HTTP GET — loads documents from Firebase
+  // GET all documents from Node server
   getDocuments() {
     this.http
-      .get<Document[]>(this.databaseUrl + 'documents.json')
+      .get<{ message: string, documents: Document[] }>('http://localhost:3000/documents')
       .subscribe(
-        (documents: Document[]) => {
-          this.documents = documents;
-          this.maxDocumentId = this.getMaxId();
+        (responseData) => {
+          this.documents = responseData.documents;
 
           this.documents.sort((a, b) =>
             a.name < b.name ? -1 : a.name > b.name ? 1 : 0
@@ -56,66 +35,82 @@ export class DocumentService {
   }
 
   getDocument(id: string): Document {
-    for (const document of this.documents) {
-      if (document.id === id) {
-        return document;
-      }
-    }
-    return null;
+    return this.documents.find((doc) => doc.id === id);
   }
 
-  // HTTP PUT — saves documents to Firebase
-  storeDocuments() {
-    const documentsString = JSON.stringify(this.documents);
+  // POST — add new document to Node server
+  addDocument(document: Document) {
+    if (!document) {
+      return;
+    }
+
+    // Node server generates the ID
+    document.id = '';
+
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
     this.http
-      .put(this.databaseUrl + 'documents.json', documentsString, { headers })
-      .subscribe(() => {
-        this.documentChangedEvent.next(this.documents.slice());
+      .post<{ message: string, document: Document }>(
+        'http://localhost:3000/documents',
+        document,
+        { headers: headers }
+      )
+      .subscribe((responseData) => {
+        this.documents.push(responseData.document);
+        this.sortAndSend();
       });
   }
 
-  // Updated to call storeDocuments()
-  addDocument(newDocument: Document) {
-    if (!newDocument) {
+  // PUT — update document on Node server
+  updateDocument(originalDocument: Document, newDocument: Document) {
+    if (!originalDocument || !newDocument) {
       return;
     }
 
-    this.maxDocumentId++;
-    newDocument.id = this.maxDocumentId.toString();
-
-    this.documents.push(newDocument);
-    this.storeDocuments();
-  }
-
-  updateDocument(original: Document, newDoc: Document) {
-    if (!original || !newDoc) {
-      return;
-    }
-
-    const pos = this.documents.indexOf(original);
+    const pos = this.documents.findIndex(d => d.id === originalDocument.id);
     if (pos < 0) {
       return;
     }
 
-    newDoc.id = original.id;
-    this.documents[pos] = newDoc;
+    // Keep same ID
+    newDocument.id = originalDocument.id;
 
-    this.storeDocuments();
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put('http://localhost:3000/documents/' + originalDocument.id,
+        newDocument,
+        { headers: headers }
+      )
+      .subscribe(() => {
+        this.documents[pos] = newDocument;
+        this.sortAndSend();
+      });
   }
 
+  // DELETE — delete document on Node server
   deleteDocument(document: Document) {
     if (!document) {
       return;
     }
 
-    const pos = this.documents.indexOf(document);
+    const pos = this.documents.findIndex(d => d.id === document.id);
     if (pos < 0) {
       return;
     }
 
-    this.documents.splice(pos, 1);
-    this.storeDocuments();
+    this.http
+      .delete('http://localhost:3000/documents/' + document.id)
+      .subscribe(() => {
+        this.documents.splice(pos, 1);
+        this.sortAndSend();
+      });
+  }
+
+  private sortAndSend() {
+    this.documents.sort((a, b) =>
+      a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+    );
+    this.documentChangedEvent.next(this.documents.slice());
   }
 }

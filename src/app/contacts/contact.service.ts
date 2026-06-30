@@ -1,7 +1,7 @@
 import { Injectable, EventEmitter } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { Contact } from './contact.model';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -11,34 +11,16 @@ export class ContactService {
   contacts: Contact[] = [];
   contactSelectedEvent = new EventEmitter<Contact>();
   contactListChangedEvent = new Subject<Contact[]>();
-  maxContactId: number;
 
-  // Your Firebase URL (must end with a slash)
-  private databaseUrl = 'https://zack-cms-default-rtdb.firebaseio.com/';
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient) { }
-
-  getMaxId(): number {
-    let maxId = 0;
-
-    for (const contact of this.contacts) {
-      const currentId = parseInt(contact.id, 10);
-      if (currentId > maxId) {
-        maxId = currentId;
-      }
-    }
-
-    return maxId;
-  }
-
-  // HTTP GET — loads contacts from Firebase
+  // GET all contacts from Node server
   getContacts() {
     this.http
-      .get<Contact[]>(this.databaseUrl + 'contacts.json')
+      .get<{ message: string, contacts: Contact[] }>('http://localhost:3000/contacts')
       .subscribe(
-        (contacts: Contact[]) => {
-          this.contacts = contacts;
-          this.maxContactId = this.getMaxId();
+        (responseData) => {
+          this.contacts = responseData.contacts;
 
           this.contacts.sort((a, b) =>
             a.name < b.name ? -1 : a.name > b.name ? 1 : 0
@@ -53,66 +35,82 @@ export class ContactService {
   }
 
   getContact(id: string): Contact {
-    for (const contact of this.contacts) {
-      if (contact.id === id) {
-        return contact;
-      }
-    }
-    return null;
+    return this.contacts.find((contact) => contact.id === id);
   }
 
-  // HTTP PUT — saves contacts to Firebase
-  storeContacts() {
-    const contactsString = JSON.stringify(this.contacts);
+  // POST — add new contact to Node server
+  addContact(contact: Contact) {
+    if (!contact) {
+      return;
+    }
+
+    // Node server generates the ID
+    contact.id = '';
+
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
     this.http
-      .put(this.databaseUrl + 'contacts.json', contactsString, { headers })
-      .subscribe(() => {
-        this.contactListChangedEvent.next(this.contacts.slice());
+      .post<{ message: string, contact: Contact }>(
+        'http://localhost:3000/contacts',
+        contact,
+        { headers: headers }
+      )
+      .subscribe((responseData) => {
+        this.contacts.push(responseData.contact);
+        this.sortAndSend();
       });
   }
 
-  // Updated to call storeContacts()
-  addContact(newContact: Contact) {
-    if (!newContact) {
+  // PUT — update contact on Node server
+  updateContact(originalContact: Contact, newContact: Contact) {
+    if (!originalContact || !newContact) {
       return;
     }
 
-    this.maxContactId++;
-    newContact.id = this.maxContactId.toString();
-
-    this.contacts.push(newContact);
-    this.storeContacts();
-  }
-
-  updateContact(original: Contact, newContact: Contact) {
-    if (!original || !newContact) {
-      return;
-    }
-
-    const pos = this.contacts.indexOf(original);
+    const pos = this.contacts.findIndex(c => c.id === originalContact.id);
     if (pos < 0) {
       return;
     }
 
-    newContact.id = original.id;
-    this.contacts[pos] = newContact;
+    // Keep same ID
+    newContact.id = originalContact.id;
 
-    this.storeContacts();
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put('http://localhost:3000/contacts/' + originalContact.id,
+        newContact,
+        { headers: headers }
+      )
+      .subscribe(() => {
+        this.contacts[pos] = newContact;
+        this.sortAndSend();
+      });
   }
 
+  // DELETE — delete contact on Node server
   deleteContact(contact: Contact) {
     if (!contact) {
       return;
     }
 
-    const pos = this.contacts.indexOf(contact);
+    const pos = this.contacts.findIndex(c => c.id === contact.id);
     if (pos < 0) {
       return;
     }
 
-    this.contacts.splice(pos, 1);
-    this.storeContacts();
+    this.http
+      .delete('http://localhost:3000/contacts/' + contact.id)
+      .subscribe(() => {
+        this.contacts.splice(pos, 1);
+        this.sortAndSend();
+      });
+  }
+
+  private sortAndSend() {
+    this.contacts.sort((a, b) =>
+      a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+    );
+    this.contactListChangedEvent.next(this.contacts.slice());
   }
 }

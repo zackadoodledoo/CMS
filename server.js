@@ -5,6 +5,7 @@ var http = require('http');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose'); //mongoose added for week11
 
 // import the routing file to handle the default (index) route
 var index = require('./server/routes/app');
@@ -17,6 +18,18 @@ var contactsRoutes = require('./server/routes/contacts');
 
 
 var app = express(); // create an instance of express
+
+// establish a connection to the mongo database  
+mongoose.connect('mongodb://127.0.0.1:27017/cms',
+   { useNewUrlParser: true }, (err, res) => {
+      if (err) {
+         console.log('Connection failed: ' + err);
+      }
+      else {
+         console.log('Connected to database!');
+      }
+   }
+);
 
 // Tell express to use the following parsers for POST data
 app.use(bodyParser.json());
@@ -41,9 +54,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Tell express to use the specified director as the
-// root directory for your web site
-app.use(express.static(path.join(__dirname, 'dist/cms')));
 
 // Tell express to map the default route ('/') to the index route
 app.use('/', index);
@@ -53,13 +63,6 @@ app.use('/', index);
 app.use('/documents', documentsRoutes);
 app.use('/messages', messagesRoutes);
 app.use('/contacts', contactsRoutes);
-
-
-// Tell express to map all other non-defined routes back to the index page
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'dist/cms/index.html'));
-});
-
 
 // Define the port address and tell express to use this port
 const port = process.env.PORT || '3000';
